@@ -38,7 +38,8 @@ for i = 1:noi
     img = imread(join(['snake\snake_',sprintf( '%04d', i-1 ),'.png']));
     
     k = 1;
-    meanSnake(:) = meanSnake(:).*(1/target);
+    meanSnake(:) = meanSnake(:).*(1/target).*2;
+    meanSnake = uint16(meanSnake);
     max_target = target;
     
     % saving previous head position to check whether or not it is tracked
@@ -53,14 +54,14 @@ for i = 1:noi
             head_pos = end_pos(2,:)
         end
         
-        %if head found - place "target" number of particles there
+        % if head found - place all the particles there
         for p = 1:2000 
-            if particles(p,3) == 0
+            if ~(particles(p,1) == head_pos(1) && particles(p,2) == head_pos(2))
+%            if particles(p,3) == 0
                     particles(p,:) = [head_pos 1];
             end
         end
-        % all particles take head's position
-        % particles(:) = ones(2000,3).*[head_pos 1];
+        
     else    
         % create particles on snek if head not found - it is not perfect!!
         if target > 1
@@ -75,7 +76,21 @@ for i = 1:noi
         end
     end
     
+       
+    if length(end_pos) == 2 && head_found == 1
+        head_pos = end_pos(2,:)
         
+        % if head found - place all the particles there
+        for p = 1:2000 
+            if ~(particles(p,1) == head_pos(1) && particles(p,2) == head_pos(2))
+%            if particles(p,3) == 0
+                    particles(p,:) = [head_pos 1];
+            end
+        end
+        
+
+    end
+    
 
         
     % coloring particles' pixels
@@ -111,32 +126,66 @@ for i = 1:noi
 
     for k = 1:nop
         %prediction - moving a particle 1 random step
-        switch int8(rand(1,1)*4)
-            case 0
-                if particles(k,1) < 200
-                    particles(k,1) = particles(k,1) + 1;
-                else
-                    particles(k,1) = 1;
-                end
-            case 1 
-                if particles(k,1) > 1
-                    particles(k,1) = particles(k,1) - 1;
-                else
-                    particles(k,1) = 200;
-                end
-            case 2 
-                if particles(k,2) < 200
-                    particles(k,2) = particles(k,2) + 1;
-                else
-                    particles(k,2) = 1;
-                end
-            case 3
-                if particles(k,2) > 1
-                    particles(k,2) = particles(k,2) - 1;
-                else
-                    particles(k,2) = 200;
-                end
-        end
+%         if meanSnake(1) == 0 && head_found == 0
+            switch int8(rand(1,1)*4)
+                case 0
+                    if particles(k,1) < 200
+                        particles(k,1) = particles(k,1) + 1;
+                    else
+                        particles(k,1) = 1;
+                    end
+                case 1 
+                    if particles(k,1) > 1
+                        particles(k,1) = particles(k,1) - 1;
+                    else
+                        particles(k,1) = 200;
+                    end
+                case 2 
+                    if particles(k,2) < 200
+                        particles(k,2) = particles(k,2) + 1;
+                    else
+                        particles(k,2) = 1;
+                    end
+                case 3
+                    if particles(k,2) > 1
+                        particles(k,2) = particles(k,2) - 1;
+                    else
+                        particles(k,2) = 200;
+                    end
+            end
+%         elseif meanSnake(1) ~= 0 && head_found == 0
+%             diff = [meanSnake(:); 0]' - uint16(particles(k,:));
+%             % left
+%             if diff(1) < 0
+%                     if particles(k,1) < 200
+%                         particles(k,1) = particles(k,1) + 1;
+%                     else
+%                         particles(k,1) = 1;
+%                     end
+%             % right    
+%             elseif diff(1) > 0
+%                     if particles(k,1) > 1
+%                         particles(k,1) = particles(k,1) - 1;
+%                     else
+%                         particles(k,1) = 200;
+%                     end
+%             end
+%             % top
+%             if diff(2) < 0
+%                     if particles(k,2) < 200
+%                         particles(k,2) = particles(k,2) + 1;
+%                     else
+%                         particles(k,2) = 1;
+%                     end
+%             % botton    
+%             elseif diff(2) > 0
+%                     if particles(k,2) > 1
+%                         particles(k,2) = particles(k,2) - 1;
+%                     else
+%                         particles(k,2) = 200;
+%                     end
+%             end
+%         end    
         % scanning the map
         
         if img(particles(k,1),particles(k,2),1) == 255
@@ -151,12 +200,14 @@ for i = 1:noi
             end    
                 
             particles(k,3) = 1;
+            
             if target < (nop / 3 - 1)
                 par2b(target,:) = particles(k,:);
                 par2b(target+1,:) = particles(k,:);
                 target = target + 2;
                 meanSnake(1) = meanSnake(1) + particles(k,1);
                 meanSnake(2) = meanSnake(2) + particles(k,2);
+                
             end
             
         else 
